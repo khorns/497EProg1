@@ -8,15 +8,17 @@
  *
  * -train train_x.txt train_y.txt a my.model 2000 2 1
  * train dataset1: -train data/dataset1/train_x.txt data/dataset1/train_y.txt a my.model 2500 500 1
+ * train dataset2: -train data/dataset2/train_x.txt data/dataset2/train_y.txt a my.model 2000000 1 1
  * train dataset3: -train data/dataset3/train_x.txt data/dataset3/train_y.txt a my.model 2000 1 8
  */
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+
+import java.io.*;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -30,6 +32,7 @@ public class prog1 {
 
                 // Training Mode (Analytical Solution)
                 trainA(args);
+
             }
             else if (Objects.equals(args[3], "g")){
                 System.out.println("Training mode g");
@@ -87,6 +90,7 @@ public class prog1 {
     private static void trainA (String[] args) throws IOException {
         String filex = args[1];
         String filey = args[2];
+        String outFile = args[4];
 
         int N = Integer.parseInt(args[5]);
         int D = Integer.parseInt(args[6]);
@@ -130,8 +134,9 @@ public class prog1 {
         z = new LUDecomposition(z).getSolver().getInverse();
         z = z.multiply(xhat.transpose().multiply(yhat));
 
-        System.out.println("Hello world");
+        System.out.println("Completed");
         System.out.println(Arrays.toString(z.getColumn(0)));
+        writeFile(outFile, z);             // write out the file
     }
 
     private static void matrixConvertK(String[] data, RealMatrix MatData, int K) {
@@ -234,6 +239,28 @@ public class prog1 {
             e.printStackTrace();
         }
         return fileReader;
+    }
+
+    private static void writeFile(String fileName, RealMatrix matrix) throws IOException {
+        Writer writer = null;
+        NumberFormat science = new DecimalFormat("0.###E0");
+        try {
+            writer = new BufferedWriter(new OutputStreamWriter(
+                    new FileOutputStream(fileName), "utf-8"));
+            writer.write("Something");
+
+            //TODO FIX THIS
+
+            writer.write(science.format(matrix.getEntry(0 ,0)));
+
+
+        } catch (IOException ex) {
+            // report
+        } finally {
+            assert writer != null;
+            writer.close();
+            //try {writer.close();} catch (Exception ex) {/*ignore*/}
+        }
     }
 
 }
