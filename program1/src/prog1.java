@@ -6,10 +6,18 @@
  * Version 1.0
  * April 14, 2016
  *
+ *  Training
  * -train train_x.txt train_y.txt a my.model 2000 2 1
  * train dataset1: -train data/dataset1/train_x.txt data/dataset1/train_y.txt a my.model 2500 500 1
  * train dataset2: -train data/dataset2/train_x.txt data/dataset2/train_y.txt a my.model 2000000 1 1
  * train dataset3: -train data/dataset3/train_x.txt data/dataset3/train_y.txt a my.model 2000 1 8
+ *
+ *  Prediction
+ * -pred train_x.txt my.model my.prediction 2000 2 1
+ * predict dataset1: -pred data/dataset1/train_x.txt my.model my.prediction 2500 500 1
+ * predict dataset2: -pred data/dataset2/train_x.txt my.model my.prediction 2000000 1 1
+ * predict dataset3: -pred data/dataset3/train_x.txt my.model my.prediction 2000 1 8
+ *
  */
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -19,7 +27,6 @@ import org.apache.commons.math3.linear.RealMatrix;
 import java.io.*;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.Arrays;
 import java.util.Objects;
 
 public class prog1 {
@@ -27,64 +34,125 @@ public class prog1 {
     public static void main(String[] args) throws IOException {
 
         if (Objects.equals(args[0], "-train")) {
-            if (Objects.equals(args[3], "a")) {
-                System.out.println("Training mode a");
-
-                // Training Mode (Analytical Solution)
+            if (Objects.equals(args[3], "a")) {         // Training Mode (Analytical Solution)
+                System.out.println("Training Mode (Analytical Solution)");
                 trainA(args);
-
             }
-            else if (Objects.equals(args[3], "g")){
-                System.out.println("Training mode g");
+            else if (Objects.equals(args[3], "g")){     // Training mode (Gradient Descent)
+                System.out.println("Training mode (Gradient Descent)");
             }
-
         }
-        else if (Objects.equals(args[0], "-pred")) {
+        else if (Objects.equals(args[0], "-pred")) {    // Predictions Mode
             System.out.println("Prediction mode");
+            prediction(args);
         }
-        else if (Objects.equals(args[0], "-eval")) {
+        else if (Objects.equals(args[0], "-eval")) {    // Evaluation Mode
             System.out.println("Evaluation mode");
         }
         else {
             System.out.println("Unknown mode");
             System.exit(0);
         }
-
-//        String filex = args[1];
-//        String filey = args[2];
-//
-//        int N = Integer.parseInt(args[5]);
-//        int D = Integer.parseInt(args[6]);
-//        int K = Integer.parseInt(args[7]);
-//
-//        RealMatrix xhat = new Array2DRowRealMatrix(new double[N][D+1]);
-//        RealMatrix yhat = new Array2DRowRealMatrix(new double[N][1]);
-//
-//
-//        String train_x_reader = fileOpen(filex);
-//        String train_y_reader = fileOpen(filey);
-//
-////        String[] trainXString = train_x_reader.split("\r\n");
-////        String[] trainYString = train_y_reader.split("\r\n");
-//        String[] trainXString = train_x_reader.split(" \n");
-//        String[] trainYString = train_y_reader.split(" \n");
-//
-//        matrixConvert(trainXString, xhat, D);   // xhat
-//        matrixConvert(trainYString, yhat, 0);   // yhat
-//
-//        // Calculating BetaHat*
-//        RealMatrix z = xhat.transpose().multiply(xhat);
-//        z = new LUDecomposition(z).getSolver().getInverse();
-//        z = z.multiply(xhat.transpose().multiply(yhat));
-//
-//        System.out.println("Hello world");
-//        System.out.println(Arrays.toString(z.getColumn(0)));
     }
 
 
     /**
+     * Prediction Mode
+     * @param args command line arguments
+     * @throws IOException
+     */
+    private static void prediction(String[] args) throws IOException {
+        String filex = args[1];
+        String fileModel = args[2];
+        String filePred = args[3];
+
+        int N = Integer.parseInt(args[4]);
+        int D = Integer.parseInt(args[5]);
+        int K = Integer.parseInt(args[6]);
+
+        String[] filexReader = fileOpen(filex);
+        String[] modelReader = fileOpen(fileModel);
+
+        double[][] filexArray;
+        double[] fileModelArray;
+
+        System.out.println("Running...");
+        if (K == 1) {
+            filexArray = new double[N][D];
+            fileModelArray = new double[D+1];
+        }
+        else {
+            filexArray = new double[N][K+1];
+            fileModelArray = new double[K+1];
+        }
+
+
+        // filex
+        String[] tempArray;
+        if (D >= 2) {
+            for (int i = 0; i < N; i++) {
+                tempArray = filexReader[i].split("\\s");
+
+                for (int j = 0; j < D; j++) {
+                    filexArray[i][j] = Double.parseDouble(tempArray[j]);
+                }
+            }
+        }
+        else if(D == 1 && K > 1) {
+            for (int i = 0; i < N; i++) {
+                for (int j = 0; j <= K; j++) {
+                    filexArray[i][j] = Math.pow(Double.parseDouble(filexReader[i]), j);
+                }
+            }
+        }
+        else {
+            for (int i = 0; i < N; i++) {
+                filexArray[i][0] = Double.parseDouble(filexReader[i]);
+            }
+        }
+
+        // fileModel
+        if (K == 1) {
+            for (int i = 0; i < D + 1; i++) {
+                fileModelArray[i] = Double.parseDouble(modelReader[i]);
+            }
+        }
+        else {
+            for (int i = 0; i < K + 1; i++) {
+                fileModelArray[i] = Double.parseDouble(modelReader[i]);
+            }
+        }
+
+        double result = 0;
+        double pred[] = new double[N];
+
+        if (K == 1) {
+            for (int i = 0; i < N; i++) {
+                for (int j = 0; j < D; j++) {
+                    result += filexArray[i][j] * fileModelArray[j+1];
+                }
+                result += fileModelArray[0];
+                pred[i] = result;
+                result = 0;
+            }
+        }
+        else {
+            for (int i = 0; i < N; i++) {
+                for (int j = 0; j <= K; j++) {
+                    result += filexArray[i][j] * fileModelArray[j];
+                }
+                pred[i] = result;
+                result = 0;
+            }
+        }
+
+        writePredictFile(filePred, pred);
+        System.out.println("Complete");
+    }
+
+    /**
      * Training Mode (Analytical Solution)
-     * @param args arguments from terminal
+     * @param args arguments from terminal as input
      * @throws IOException
      */
     private static void trainA (String[] args) throws IOException {
@@ -98,22 +166,10 @@ public class prog1 {
         RealMatrix xhat;
         RealMatrix yhat;
 
-//        RealMatrix xhat = new Array2DRowRealMatrix(new double[N][D+1]);
-//        RealMatrix yhat = new Array2DRowRealMatrix(new double[N][1]);
+        System.out.println("Running...");
 
-
-        String train_x_reader = fileOpen(filex);
-        String train_y_reader = fileOpen(filey);
-
-        // Windows
-//        String[] trainXString = train_x_reader.split("\r\n");
-//        String[] trainYString = train_y_reader.split("\r\n");
-        // Linux
-        String[] trainXString = train_x_reader.split(" \n");
-        String[] trainYString = train_y_reader.split(" \n");
-
-//        matrixConvert(trainXString, xhat, D);   // xhat
-//        matrixConvert(trainYString, yhat, 0);   // yhat
+        String[] trainXString = fileOpen(filex);
+        String[] trainYString = fileOpen(filey);
 
         // Create matrix for xhat and yhat
         if (K == 1) {
@@ -135,10 +191,16 @@ public class prog1 {
         z = z.multiply(xhat.transpose().multiply(yhat));
 
         System.out.println("Completed");
-        System.out.println(Arrays.toString(z.getColumn(0)));
+//        System.out.println(Arrays.toString(z.getColumn(0)));
         writeFile(outFile, z);             // write out the file
     }
 
+    /**
+     * Convert an array to a RealMatrix
+     * @param data data for matrix
+     * @param MatData matrix result
+     * @param K poly order
+     */
     private static void matrixConvertK(String[] data, RealMatrix MatData, int K) {
         double doubleTemp;
         double original;
@@ -161,8 +223,8 @@ public class prog1 {
             index++;
             DTemp = 0;
         }
-
     }
+
 
     /**
      * Build matrix
@@ -223,8 +285,9 @@ public class prog1 {
      * @return a string
      * @throws IOException
      */
-    public static String fileOpen(String fileName) throws IOException {
+    public static String[] fileOpen(String fileName) throws IOException {
         String fileReader = null;
+        String[] spliter = new String[0];
         try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
             StringBuilder sb = new StringBuilder();
             String line = br.readLine();
@@ -235,31 +298,69 @@ public class prog1 {
                 line = br.readLine();
             }
             fileReader = sb.toString();
+
+            // Windows
+            spliter = fileReader.split("\r\n");
+            // Linux
+//            spliter = fileReader.split(" \n");
+
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return fileReader;
+        return spliter;
     }
 
+
+    /**
+     * Write a file for training mode
+     * @param fileName file name
+     * @param matrix matrix input
+     * @throws IOException
+     */
     private static void writeFile(String fileName, RealMatrix matrix) throws IOException {
         Writer writer = null;
         NumberFormat science = new DecimalFormat("0.###E0");
         try {
             writer = new BufferedWriter(new OutputStreamWriter(
                     new FileOutputStream(fileName), "utf-8"));
-            writer.write("Something");
 
-            //TODO FIX THIS
+            // Write to a file base on column
+            for (int i = 0; i < matrix.getData().length; i++) {
+                writer.write(science.format(matrix.getEntry(i ,0)) + "\n");
+            }
 
-            writer.write(science.format(matrix.getEntry(0 ,0)));
+        } catch (IOException ignored) {
 
-
-        } catch (IOException ex) {
-            // report
         } finally {
             assert writer != null;
             writer.close();
-            //try {writer.close();} catch (Exception ex) {/*ignore*/}
+        }
+    }
+
+
+    /**
+     * Writing a file for prediciton
+     * @param fileName file name
+     * @param array the prediction data
+     * @throws IOException
+     */
+    private static void writePredictFile(String fileName, double[] array) throws IOException {
+        Writer writer = null;
+        NumberFormat science = new DecimalFormat("0.###E0");
+        try {
+            writer = new BufferedWriter(new OutputStreamWriter(
+                    new FileOutputStream(fileName), "utf-8"));
+
+            // Write to a file base on column
+            for (int i = 0; i < array.length; i++) {
+                writer.write(science.format(array[i]) + "\n");
+            }
+
+        } catch (IOException ignored) {
+
+        } finally {
+            assert writer != null;
+            writer.close();
         }
     }
 
