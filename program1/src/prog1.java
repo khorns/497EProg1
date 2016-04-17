@@ -18,6 +18,11 @@
  * predict dataset2: -pred data/dataset2/train_x.txt my.model my.prediction 2000000 1 1
  * predict dataset3: -pred data/dataset3/train_x.txt my.model my.prediction 2000 1 8
  *
+ *  Evaluation
+ * evaluation dataset4 -eval data/dataset4/dev_x.txt data/dataset4/dev_y.txt my.model 500 2 1
+ * evaluation dataset1 -eval data/dataset1/dev_x.txt data/dataset1/dev_y.txt my.model 500 500 1
+ * evaluation dataset3 -eval data/dataset3/dev_x.txt data/dataset3/dev_y.txt my.model 500 1 8
+ *
  */
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -48,6 +53,7 @@ public class prog1 {
         }
         else if (Objects.equals(args[0], "-eval")) {    // Evaluation Mode
             System.out.println("Evaluation mode");
+            evaluation(args);
         }
         else {
             System.out.println("Unknown mode");
@@ -55,6 +61,113 @@ public class prog1 {
         }
     }
 
+
+    /**
+     * Evaluation Mode
+     * @param args Command line arguments
+     * @throws IOException
+     */
+    private static void evaluation(String[] args) throws IOException {
+        String filex = args[1];
+        String filey = args[2];
+        String fileModel = args[3];
+
+        int N = Integer.parseInt(args[4]);
+        int D = Integer.parseInt(args[5]);
+        int K = Integer.parseInt(args[6]);
+
+        String[] filexReader = fileOpen(filex);
+        String[] modelReader = fileOpen(fileModel);
+        String[] fileyReader = fileOpen(filey);
+
+        double[][] filexArray;
+        double[] fileModelArray;
+        double[] fileyArray = new double[N];
+
+        System.out.println("Running...");
+        if (K == 1) {
+            filexArray = new double[N][D];
+            fileModelArray = new double[D+1];
+        }
+        else {
+            filexArray = new double[N][K+1];
+            fileModelArray = new double[K+1];
+        }
+
+        // filey
+        for (int i = 0; i < N; i++) {
+            fileyArray[i] = Double.parseDouble(fileyReader[i]);
+        }
+
+        // filex
+        String[] tempArray;
+        if (D >= 2) {
+            for (int i = 0; i < N; i++) {
+                tempArray = filexReader[i].split("\\s");
+
+                for (int j = 0; j < D; j++) {
+                    filexArray[i][j] = Double.parseDouble(tempArray[j]);
+                }
+            }
+        }
+        else if(D == 1 && K > 1) {
+            for (int i = 0; i < N; i++) {
+                for (int j = 0; j <= K; j++) {
+                    filexArray[i][j] = Math.pow(Double.parseDouble(filexReader[i]), j);
+                }
+            }
+        }
+        else {
+            for (int i = 0; i < N; i++) {
+                filexArray[i][0] = Double.parseDouble(filexReader[i]);
+            }
+        }
+
+        // fileModel
+        if (K == 1) {
+            for (int i = 0; i < D + 1; i++) {
+                fileModelArray[i] = Double.parseDouble(modelReader[i]);
+            }
+        }
+        else {
+            for (int i = 0; i < K + 1; i++) {
+                fileModelArray[i] = Double.parseDouble(modelReader[i]);
+            }
+        }
+
+        double result = 0;
+        double pred[] = new double[N];
+
+        if (K == 1) {
+            for (int i = 0; i < N; i++) {
+                for (int j = 0; j < D; j++) {
+                    result += filexArray[i][j] * fileModelArray[j+1];
+                }
+                result += fileModelArray[0];
+                pred[i] = result;
+                result = 0;
+            }
+        }
+        else {
+            for (int i = 0; i < N; i++) {
+                for (int j = 0; j <= K; j++) {
+                    result += filexArray[i][j] * fileModelArray[j];
+                }
+                pred[i] = result;
+                result = 0;
+            }
+        }
+
+        NumberFormat science = new DecimalFormat("0.###E0");
+
+        double total = 0;
+        for (int i = 0; i < N; i++) {
+            System.out.println(science.format(pred[i]) + " : " + science.format(fileyArray[i]));
+            total += Math.pow(pred[i] - fileyArray[i], 2);
+        }
+        total = total / N;
+        System.out.println("MSE is: " + total);
+    }
 
     /**
      * Prediction Mode
