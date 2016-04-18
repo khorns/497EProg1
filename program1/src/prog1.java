@@ -6,7 +6,7 @@
  * Version 1.0
  * April 14, 2016
  *
- *  Training
+ *  Training Analytical Solution
  * -train train_x.txt train_y.txt a my.model 2000 2 1
  * train dataset1: -train data/dataset1/train_x.txt data/dataset1/train_y.txt a my.model 2500 500 1
  * train dataset2: -train data/dataset2/train_x.txt data/dataset2/train_y.txt a my.model 2000000 1 1
@@ -23,6 +23,10 @@
  * evaluation dataset1 -eval data/dataset1/dev_x.txt data/dataset1/dev_y.txt my.model 500 500 1
  * evaluation dataset3 -eval data/dataset3/dev_x.txt data/dataset3/dev_y.txt my.model 500 1 8
  *
+ *  Training Gradient Descent Solution
+ *  train dataset4: -train data/dataset4/train_x.txt data/dataset4/train_y.txt g 0.1 0.05 descent.model 2000 2 1
+ *  train dataset1: -train data/dataset1/train_x.txt data/dataset1/train_y.txt g 0.1 0.05 descent.model 2500 500 1
+ *  train dataset3: -train data/dataset3/train_x.txt data/dataset3/train_y.txt g 0.0000005 0.0001 descent.model 2000 1 8
  */
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -45,6 +49,7 @@ public class prog1 {
             }
             else if (Objects.equals(args[3], "g")){     // Training mode (Gradient Descent)
                 System.out.println("Training mode (Gradient Descent)");
+                trainG(args);
             }
         }
         else if (Objects.equals(args[0], "-pred")) {    // Predictions Mode
@@ -61,6 +66,72 @@ public class prog1 {
         }
     }
 
+
+    private static void trainG(String[] args) throws IOException {
+        String filex = args[1];
+        String filey = args[2];
+        String outFile = args[6];
+
+        double ss = Double.parseDouble(args[4]);
+        double st = Double.parseDouble(args[5]);
+
+        int N = Integer.parseInt(args[7]);
+        int D = Integer.parseInt(args[8]);
+        int K = Integer.parseInt(args[9]);
+        RealMatrix xhat;
+        RealMatrix yhat;
+        RealMatrix bhat;
+
+        System.out.println("Running...");
+
+        String[] trainXString = fileOpen(filex);
+        String[] trainYString = fileOpen(filey);
+
+        // Create matrix for xhat and yhat
+        if (K == 1) {
+            xhat = new Array2DRowRealMatrix(new double[N][D+1]);
+            yhat = new Array2DRowRealMatrix(new double[N][1]);
+            bhat = new Array2DRowRealMatrix(new double[D+1][1]);   // beta hat
+            matrixConvert(trainXString, xhat, D);   // xhat
+            matrixConvert(trainYString, yhat, 0);   // yhat
+        }
+        else {
+            xhat = new Array2DRowRealMatrix(new double[N][K+1]);
+            yhat = new Array2DRowRealMatrix(new double[N][1]);
+            bhat = new Array2DRowRealMatrix(new double[K+1][1]);   // beta hat
+            matrixConvertK(trainXString, xhat, K);   // xhat
+            matrixConvert(trainYString, yhat, 0);   // yhat
+        }
+
+        boolean converged = false;
+        RealMatrix risk;
+        RealMatrix newRisk;
+        RealMatrix gradient = xhat.transpose().multiply(xhat.multiply(bhat).subtract(yhat)).scalarMultiply(2.0/N);
+
+        risk = yhat.subtract(xhat.multiply(bhat)).transpose().multiply(yhat.subtract(xhat.multiply(bhat)));
+        double ERisk = risk.getEntry(0,0) / N;
+        double newERisk = 0;
+
+        while (!converged) {
+            bhat = bhat.subtract(gradient.scalarMultiply(ss));
+
+            newRisk = yhat.subtract(xhat.multiply(bhat)).transpose().multiply(yhat.subtract(xhat.multiply(bhat)));
+            newERisk = newRisk.getEntry(0,0) / N;
+
+            converged = checkConvergence(ERisk, newERisk, st);
+            ERisk = newERisk;
+        }
+
+//        System.out.println(bhat);
+        writeFile(outFile, bhat);
+        System.out.println("Complete");
+
+    }
+
+    private static boolean checkConvergence(double ERisk, double newERisk, double st) {
+        double relativeReduction = (ERisk - newERisk) / ERisk;
+        return relativeReduction <= st;
+    }
 
     /**
      * Evaluation Mode
