@@ -67,6 +67,11 @@ public class prog1 {
     }
 
 
+    /**
+     * Train Mode using Gradient Descent Solution
+     * @param args Command line arguments
+     * @throws IOException
+     */
     private static void trainG(String[] args) throws IOException {
         String filex = args[1];
         String filey = args[2];
@@ -110,28 +115,35 @@ public class prog1 {
 
         risk = yhat.subtract(xhat.multiply(bhat)).transpose().multiply(yhat.subtract(xhat.multiply(bhat)));
         double ERisk = risk.getEntry(0,0) / N;
-        double newERisk = 0;
+        double newERisk;
 
         while (!converged) {
             bhat = bhat.subtract(gradient.scalarMultiply(ss));
-
             newRisk = yhat.subtract(xhat.multiply(bhat)).transpose().multiply(yhat.subtract(xhat.multiply(bhat)));
             newERisk = newRisk.getEntry(0,0) / N;
 
-            converged = checkConvergence(ERisk, newERisk, st);
+            converged = checkConvergence(ERisk, newERisk, st);      // Checking for convergence
             ERisk = newERisk;
         }
 
-//        System.out.println(bhat);
         writeFile(outFile, bhat);
         System.out.println("Complete");
 
     }
 
+
+    /**
+     * Checking convergence
+     * @param ERisk Old objective value
+     * @param newERisk new objective value
+     * @param st threshold
+     * @return TRUE if convergence
+     */
     private static boolean checkConvergence(double ERisk, double newERisk, double st) {
         double relativeReduction = (ERisk - newERisk) / ERisk;
         return relativeReduction <= st;
     }
+
 
     /**
      * Evaluation Mode
@@ -206,6 +218,7 @@ public class prog1 {
             }
         }
 
+        // Calculating Mean Square Error
         double result = 0;
         double pred[] = new double[N];
 
@@ -269,7 +282,6 @@ public class prog1 {
             filexArray = new double[N][K+1];
             fileModelArray = new double[K+1];
         }
-
 
         // filex
         String[] tempArray;
@@ -512,9 +524,7 @@ public class prog1 {
             for (int i = 0; i < matrix.getData().length; i++) {
                 writer.write(science.format(matrix.getEntry(i ,0)) + "\n");
             }
-
         } catch (IOException ignored) {
-
         } finally {
             assert writer != null;
             writer.close();
@@ -523,7 +533,7 @@ public class prog1 {
 
 
     /**
-     * Writing a file for prediciton
+     * Writing a file for prediction
      * @param fileName file name
      * @param array the prediction data
      * @throws IOException
@@ -539,7 +549,6 @@ public class prog1 {
             for (int i = 0; i < array.length; i++) {
                 writer.write(science.format(array[i]) + "\n");
             }
-
         } catch (IOException ignored) {
 
         } finally {
@@ -547,5 +556,4 @@ public class prog1 {
             writer.close();
         }
     }
-
 }
