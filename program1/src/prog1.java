@@ -24,7 +24,7 @@
  * evaluation dataset3 -eval data/dataset3/dev_x.txt data/dataset3/dev_y.txt my.model 500 1 8
  *
  *  Training Gradient Descent Solution
- *  train dataset4: -train data/dataset4/train_x.txt data/dataset4/train_y.txt g 0.1 0.05 descent.model 2000 2 1
+ *  train dataset4: -train data/dataset4/train_x.txt data/dataset4/train_y.txt g 0.1 0.00001 descent.model 2000 2 1
  *  train dataset1: -train data/dataset1/train_x.txt data/dataset1/train_y.txt g 0.1 0.05 descent.model 2500 500 1
  *  train dataset3: -train data/dataset3/train_x.txt data/dataset3/train_y.txt g 0.0000005 0.0001 descent.model 2000 1 8
  */
@@ -73,16 +73,29 @@ public class prog1 {
      * @throws IOException
      */
     private static void trainG(String[] args) throws IOException {
-        String filex = args[1];
-        String filey = args[2];
-        String outFile = args[6];
 
-        double ss = Double.parseDouble(args[4]);
-        double st = Double.parseDouble(args[5]);
+        String filex = "", filey = "", outFile = "";
+        double ss = 0, st = 0;
+        int N = 0, D = 0, K = 0;
 
-        int N = Integer.parseInt(args[7]);
-        int D = Integer.parseInt(args[8]);
-        int K = Integer.parseInt(args[9]);
+        //
+        try {
+            filex = args[1];
+            filey = args[2];
+            outFile = args[6];
+
+            ss = Double.parseDouble(args[4]);
+            st = Double.parseDouble(args[5]);
+
+            N = Integer.parseInt(args[7]);
+            D = Integer.parseInt(args[8]);
+            K = Integer.parseInt(args[9]);
+        }
+        catch (Exception e) {
+            System.out.println("Fail Conversion or wrong number of parameters, check your parameters");
+            System.exit(1);
+        }
+
         RealMatrix xhat;
         RealMatrix yhat;
         RealMatrix bhat;
@@ -151,22 +164,34 @@ public class prog1 {
      * @throws IOException
      */
     private static void evaluation(String[] args) throws IOException {
-        String filex = args[1];
-        String filey = args[2];
-        String fileModel = args[3];
 
-        int N = Integer.parseInt(args[4]);
-        int D = Integer.parseInt(args[5]);
-        int K = Integer.parseInt(args[6]);
+        String filex, filey, fileModel;
+        filex = filey = fileModel = "";
+        int N = 0, D = 0, K = 0;
+
+        try {
+            filex = args[1];
+            filey = args[2];
+            fileModel = args[3];
+
+            N = Integer.parseInt(args[4]);
+            D = Integer.parseInt(args[5]);
+            K = Integer.parseInt(args[6]);
+        }
+        catch (Exception e) {
+            System.out.println("Fail Conversion or wrong number of parameters, check your parameters");
+            System.exit(1);
+        }
 
         String[] filexReader = fileOpen(filex);
-        String[] modelReader = fileOpen(fileModel);
+        String[] modelReaderA = fileOpen(fileModel);
         String[] fileyReader = fileOpen(filey);
 
         double[][] filexArray;
         double[] fileModelArray;
         double[] fileyArray = new double[N];
 
+        String[] modelReader = modelReaderA[0].split("\n");     //For Linux (Check on this if running on windows)
         System.out.println("Running...");
         if (K == 1) {
             filexArray = new double[N][D];
@@ -268,11 +293,12 @@ public class prog1 {
         int K = Integer.parseInt(args[6]);
 
         String[] filexReader = fileOpen(filex);
-        String[] modelReader = fileOpen(fileModel);
+        String[] modelReaderA = fileOpen(fileModel);
 
         double[][] filexArray;
         double[] fileModelArray;
 
+        String[] modelReader = modelReaderA[0].split("\n");     //Linux compatibility
         System.out.println("Running...");
         if (K == 1) {
             filexArray = new double[N][D];
@@ -387,7 +413,6 @@ public class prog1 {
         z = z.multiply(xhat.transpose().multiply(yhat));
 
         System.out.println("Completed");
-//        System.out.println(Arrays.toString(z.getColumn(0)));
         writeFile(outFile, z);             // write out the file
     }
 
@@ -496,9 +521,9 @@ public class prog1 {
             fileReader = sb.toString();
 
             // Windows
-            spliter = fileReader.split("\r\n");
+//            spliter = fileReader.split("\r\n");
             // Linux
-//            spliter = fileReader.split(" \n");
+            spliter = fileReader.split(" \n");
 
         } catch (IOException e) {
             e.printStackTrace();
