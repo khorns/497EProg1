@@ -50,35 +50,6 @@ public class prog1 {
             System.exit(0);
         }
 
-//        String filex = args[1];
-//        String filey = args[2];
-//
-//        int N = Integer.parseInt(args[5]);
-//        int D = Integer.parseInt(args[6]);
-//        int K = Integer.parseInt(args[7]);
-//
-//        RealMatrix xhat = new Array2DRowRealMatrix(new double[N][D+1]);
-//        RealMatrix yhat = new Array2DRowRealMatrix(new double[N][1]);
-//
-//
-//        String train_x_reader = fileOpen(filex);
-//        String train_y_reader = fileOpen(filey);
-//
-////        String[] trainXString = train_x_reader.split("\r\n");
-////        String[] trainYString = train_y_reader.split("\r\n");
-//        String[] trainXString = train_x_reader.split(" \n");
-//        String[] trainYString = train_y_reader.split(" \n");
-//
-//        matrixConvert(trainXString, xhat, D);   // xhat
-//        matrixConvert(trainYString, yhat, 0);   // yhat
-//
-//        // Calculating BetaHat*
-//        RealMatrix z = xhat.transpose().multiply(xhat);
-//        z = new LUDecomposition(z).getSolver().getInverse();
-//        z = z.multiply(xhat.transpose().multiply(yhat));
-//
-//        System.out.println("Hello world");
-//        System.out.println(Arrays.toString(z.getColumn(0)));
     }
 
 
