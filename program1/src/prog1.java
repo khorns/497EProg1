@@ -26,6 +26,7 @@
  *  Training Gradient Descent Solution
  *  train dataset4: -train data/dataset4/train_x.txt data/dataset4/train_y.txt g 0.1 0.00001 descent.model 2000 2 1
  *  train dataset1: -train data/dataset1/train_x.txt data/dataset1/train_y.txt g 0.1 0.05 descent.model 2500 500 1
+ *  train dataset2: -train data/dataset2/train_x.txt data/dataset2/train_y.txt g 0.001 0.05 descent.model 2000000 1 1
  *  train dataset3: -train data/dataset3/train_x.txt data/dataset3/train_y.txt g 0.0000005 0.0001 descent.model 2000 1 8
  */
 
@@ -45,15 +46,24 @@ public class prog1 {
         if (Objects.equals(args[0], "-train")) {
             if (Objects.equals(args[3], "a")) {         // Training Mode (Analytical Solution)
                 System.out.println("Training Mode (Analytical Solution)");
+
+                double startTime = System.nanoTime();
                 trainA(args);
+                double endTime = System.nanoTime();
+                System.out.println((endTime - startTime) / 1000000000.0);
             }
             else if (Objects.equals(args[3], "g")){     // Training mode (Gradient Descent)
                 System.out.println("Training mode (Gradient Descent)");
+
+                double startTime = System.nanoTime();
                 trainG(args);
+                double endTime = System.nanoTime();
+                System.out.println((endTime - startTime) / 1000000000.0);
             }
         }
         else if (Objects.equals(args[0], "-pred")) {    // Predictions Mode
             System.out.println("Prediction mode");
+
             prediction(args);
         }
         else if (Objects.equals(args[0], "-eval")) {    // Evaluation Mode
@@ -284,13 +294,24 @@ public class prog1 {
      * @throws IOException
      */
     private static void prediction(String[] args) throws IOException {
-        String filex = args[1];
-        String fileModel = args[2];
-        String filePred = args[3];
 
-        int N = Integer.parseInt(args[4]);
-        int D = Integer.parseInt(args[5]);
-        int K = Integer.parseInt(args[6]);
+        String filex, fileModel, filePred;
+        filex =  fileModel = filePred = "";
+        int N = 0, D = 0, K = 0;
+
+        try {
+            filex = args[1];
+            fileModel = args[2];
+            filePred = args[3];
+
+            N = Integer.parseInt(args[4]);
+            D = Integer.parseInt(args[5]);
+            K = Integer.parseInt(args[6]);
+        }
+        catch (Exception e) {
+            System.out.println("Fail Conversion or wrong number of parameters, check your parameters");
+            System.exit(1);
+        }
 
         String[] filexReader = fileOpen(filex);
         String[] modelReaderA = fileOpen(fileModel);
